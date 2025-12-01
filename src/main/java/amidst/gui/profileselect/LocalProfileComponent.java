@@ -27,7 +27,12 @@ import java.util.Optional;
 
 @NotThreadSafe
 public class LocalProfileComponent extends ProfileComponent {
+
+	/**
+	 * A reference to the Amidst instance.
+	 */
 	private final Application application;
+
 	private final WorkerExecutor workerExecutor;
 	private final List<Version> versions;
 	private final VersionListProvider versionListProvider;

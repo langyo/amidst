@@ -27,6 +27,9 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Optional;
 
+/**
+ * The actual Amidst application, holding its state.
+ */
 @NotThreadSafe
 public class Application {
 	private final LauncherProfileRunner launcherProfileRunner;
@@ -47,8 +50,20 @@ public class Application {
 	private final Zoom zoom;
 	private final FragmentManager fragmentManager;
 
+	/**
+	 * The versions of minecraft available to amidst.
+	 */
 	private final List<Version> versions;
 
+	/**
+	 * Creates a new Amidst application instance.
+	 *
+	 * @param parameters the command line parameters passed into the executable
+	 * @param metadata   metadata about the application
+	 * @param settings   user settings
+	 * @throws FormatException if the JSON parser fails
+	 * @throws IOException     if the JSON parser fails
+	 */
 	@CalledOnlyBy(AmidstThread.EDT)
 	public Application(CommandLineParameters parameters, AmidstMetaData metadata, AmidstSettings settings) throws FormatException, IOException {
 		this.metadata = metadata;
@@ -67,9 +82,18 @@ public class Application {
 		fragmentManager = new FragmentManager(layerBuilder.getConstructors(), layerBuilder.getNumberOfLayers(), settings.threads);
 	}
 
+	/**
+	 * Opens the profile select window, or a pre-selected launcher profile,
+	 * if it is set.
+	 * <p>
+	 * This also checks for updates in the background.
+	 *
+	 * @throws MinecraftInterfaceCreationException
+	 */
 	@CalledOnlyBy(AmidstThread.EDT)
 	public void run() throws MinecraftInterfaceCreationException {
-		checkForUpdatesSilently();
+		UpdatePrompt.from(metadata.getVersion(), threadMaster.getWorkerExecutor(), null, true).check();
+
 		if (selectedLauncherProfile.isPresent()) {
 			displayMainWindow(launcherProfileRunner.run(selectedLauncherProfile.get()));
 		} else {
@@ -77,16 +101,25 @@ public class Application {
 		}
 	}
 
+	/**
+	 * Checks for updates in the foreground.
+	 *
+	 * @param dialogs
+	 */
 	@CalledOnlyBy(AmidstThread.EDT)
 	public void checkForUpdates(MainWindowDialogs dialogs) {
 		UpdatePrompt.from(metadata.getVersion(), threadMaster.getWorkerExecutor(), dialogs, false).check();
 	}
 
-	@CalledOnlyBy(AmidstThread.EDT)
-	public void checkForUpdatesSilently() {
-		UpdatePrompt.from(metadata.getVersion(), threadMaster.getWorkerExecutor(), null, true).check();
-	}
-
+	/**
+	 * Shows the {@link MainWindow} to the user.
+	 * <p>
+	 * This disposes of the profile select window if it is visible,
+	 * and any previous main window.
+	 *
+	 * @param runningLauncherProfile
+	 * @return the window object that was shown
+	 */
 	@CalledOnlyBy(AmidstThread.EDT)
 	public MainWindow displayMainWindow(RunningLauncherProfile runningLauncherProfile) {
 		selectedLauncherProfile = Optional.of(runningLauncherProfile.getLauncherProfile());
@@ -102,13 +135,28 @@ public class Application {
 				fragmentManager,
 				biomeSelection,
 				threadMaster);
-		setMainWindow(m);
-		setProfileSelectWindow(null);
+
+		if (mainWindow != null) {
+			mainWindow.dispose();
+		}
+		mainWindow = m;
+
+		if (profileSelectWindow != null) {
+			profileSelectWindow.dispose();
+			profileSelectWindow = null;
+		}
+
 		return mainWindow;
 	}
 
+	/**
+	 * Creates and shows a profile selection window.
+	 * <p>
+	 * This disposes the main window if it is visible, and any previous
+	 * profile select window.
+	 */
 	@CalledOnlyBy(AmidstThread.EDT)
-	public ProfileSelectWindow displayProfileSelectWindow() {
+	public void displayProfileSelectWindow() {
 		ProfileSelectWindow window = new ProfileSelectWindow(
 				this,
 				metadata,
@@ -118,64 +166,61 @@ public class Application {
 				minecraftInstallation,
 				launcherProfileRunner,
 				settings);
-		setProfileSelectWindow(window);
-		setMainWindow(null);
-		return profileSelectWindow;
-	}
 
-	@CalledOnlyBy(AmidstThread.EDT)
-	private void setProfileSelectWindow(ProfileSelectWindow profileSelectWindow) {
-		disposeProfileSelectWindow();
-		this.profileSelectWindow = profileSelectWindow;
-	}
-
-	@CalledOnlyBy(AmidstThread.EDT)
-	private void setMainWindow(MainWindow mainWindow) {
-		disposeMainWindow();
-		this.mainWindow = mainWindow;
-	}
-
-	@CalledOnlyBy(AmidstThread.EDT)
-	private void disposeProfileSelectWindow() {
-		ProfileSelectWindow profileSelectWindow = this.profileSelectWindow;
 		if (profileSelectWindow != null) {
 			profileSelectWindow.dispose();
 		}
-	}
+		profileSelectWindow = window;
 
-	@CalledOnlyBy(AmidstThread.EDT)
-	private void disposeMainWindow() {
-		MainWindow mainWindow = this.mainWindow;
 		if (mainWindow != null) {
 			mainWindow.dispose();
+			mainWindow = null;
 		}
 	}
 
+	/**
+	 * Creates and shows a new {@link LicenseWindow}.
+	 */
 	@CalledOnlyBy(AmidstThread.EDT)
 	public void displayLicenseWindow() {
 		new LicenseWindow(metadata);
 	}
 
+	/**
+	 * Disposes of the application windows and exits the application.
+	 */
 	@CalledOnlyBy(AmidstThread.EDT)
 	public void exitGracefully() {
 		dispose();
 		System.exit(0);
 	}
 
+	/**
+	 * Disposes of the profile select window and the main window,
+	 * setting them to {@code null}.
+	 */
 	@CalledOnlyBy(AmidstThread.EDT)
 	public void dispose() {
-		setProfileSelectWindow(null);
-		setMainWindow(null);
+		if (profileSelectWindow != null) {
+			profileSelectWindow.dispose();
+			profileSelectWindow = null;
+		}
+		if (mainWindow != null) {
+			mainWindow.dispose();
+			mainWindow = null;
+		}
 	}
 
-
+	/**
+	 * Disposes of the profile select and main windows, and runs {@link #run()}.
+	 */
 	@CalledOnlyBy(AmidstThread.EDT)
 	public void restart() {
 		dispose();
 		SwingUtilities.invokeLater(() -> {
 			try {
 				run();
-			} catch(MinecraftInterfaceCreationException e) {
+			} catch (MinecraftInterfaceCreationException e) {
 				throw new RuntimeException("Unexpected exception while restarting Amidst", e);
 			}
 		});

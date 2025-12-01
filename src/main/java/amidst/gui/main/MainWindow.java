@@ -57,7 +57,7 @@ public class MainWindow {
 	/**
 	 * Creates and shows the main application window.
 	 *
-	 * @param application
+	 * @param application            a reference to the Amidst instance
 	 * @param metadata
 	 * @param settings
 	 * @param minecraftInstallation

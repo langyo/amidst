@@ -1,20 +1,5 @@
 package amidst.gui.main;
 
-import java.awt.Component;
-import java.awt.Point;
-import java.awt.Toolkit;
-import java.awt.datatransfer.StringSelection;
-import java.awt.image.BufferedImage;
-import java.io.BufferedOutputStream;
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.util.List;
-import java.util.function.Supplier;
-
-import javax.imageio.ImageIO;
-
 import amidst.Application;
 import amidst.documentation.AmidstThread;
 import amidst.documentation.CalledByAny;
@@ -40,9 +25,28 @@ import amidst.settings.biomeprofile.BiomeProfileDirectory;
 import amidst.settings.biomeprofile.BiomeProfileSelection;
 import amidst.util.FileExtensionChecker;
 
+import javax.imageio.ImageIO;
+import java.awt.Component;
+import java.awt.Point;
+import java.awt.Toolkit;
+import java.awt.datatransfer.StringSelection;
+import java.awt.image.BufferedImage;
+import java.io.BufferedOutputStream;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.List;
+import java.util.function.Supplier;
+
 @NotThreadSafe
 public class Actions {
+
+	/**
+	 * A reference to the Amidst instance.
+	 */
 	private final Application application;
+
 	private final MainWindowDialogs dialogs;
 	private final WorldSwitcher worldSwitcher;
 	private final SeedSearcherWindow seedSearcherWindow;
