@@ -45,8 +45,6 @@ public class Application {
 	private final ThreadMaster threadMaster = new ThreadMaster();
 	private final LayerBuilder layerBuilder = new LayerBuilder();
 	private final BiomeSelection biomeSelection = new BiomeSelection();
-
-	private final AmidstMetaData metadata;
 	private final AmidstSettings settings;
 	private final MinecraftInstallation minecraftInstallation;
 	private final BiomeProfileDirectory biomeProfileDirectory;
@@ -63,14 +61,12 @@ public class Application {
 	 * Creates a new Amidst application instance.
 	 *
 	 * @param parameters the command line parameters passed into the executable
-	 * @param metadata   metadata about the application
 	 * @param settings   user settings
 	 * @throws FormatException if the JSON parser fails
 	 * @throws IOException     if the JSON parser fails
 	 */
 	@CalledOnlyBy(AmidstThread.EDT)
-	public Application(CommandLineParameters parameters, AmidstMetaData metadata, AmidstSettings settings) throws FormatException, IOException {
-		this.metadata = metadata;
+	public Application(CommandLineParameters parameters, AmidstSettings settings) throws FormatException, IOException {
 		this.settings = settings;
 
 		minecraftInstallation = MinecraftInstallation.newLocalMinecraftInstallation(parameters.dotMinecraftDirectory);
@@ -96,7 +92,7 @@ public class Application {
 	 */
 	@CalledOnlyBy(AmidstThread.EDT)
 	public void run() throws MinecraftInterfaceCreationException {
-		UpdatePrompt.from(metadata.getVersion(), threadMaster.getWorkerExecutor(), null, true).check();
+		UpdatePrompt.from(Amidst.VERSION, threadMaster.getWorkerExecutor(), null, true).check();
 
 		if (selectedLauncherProfile.isPresent()) {
 			displayMainWindow(launcherProfileRunner.run(selectedLauncherProfile.get()));
@@ -112,7 +108,7 @@ public class Application {
 	 */
 	@CalledOnlyBy(AmidstThread.EDT)
 	public void checkForUpdates(MainWindowDialogs dialogs) {
-		UpdatePrompt.from(metadata.getVersion(), threadMaster.getWorkerExecutor(), dialogs, false).check();
+		UpdatePrompt.from(Amidst.VERSION, threadMaster.getWorkerExecutor(), dialogs, false).check();
 	}
 
 	/**
@@ -129,7 +125,6 @@ public class Application {
 		selectedLauncherProfile = Optional.of(runningLauncherProfile.getLauncherProfile());
 		MainWindow m = new MainWindow(
 				this,
-				metadata,
 				settings,
 				minecraftInstallation,
 				runningLauncherProfile,
@@ -163,7 +158,6 @@ public class Application {
 	public void displayProfileSelectWindow() {
 		ProfileSelectWindow window = new ProfileSelectWindow(
 				this,
-				metadata,
 				threadMaster.getWorkerExecutor(),
 				versions,
 				versionListProvider,
@@ -187,7 +181,7 @@ public class Application {
 	 */
 	@CalledOnlyBy(AmidstThread.EDT)
 	public void displayLicenseWindow() {
-		new LicenseWindow(metadata);
+		new LicenseWindow();
 	}
 
 	/**

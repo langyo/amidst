@@ -1,33 +1,24 @@
 package amidst.gui.license;
 
+import amidst.documentation.Immutable;
+import net.miginfocom.swing.MigLayout;
+
+import javax.swing.*;
+import javax.swing.border.LineBorder;
+import javax.swing.event.ListSelectionEvent;
+import javax.swing.event.ListSelectionListener;
 import java.awt.Color;
 import java.awt.Container;
 import java.util.Arrays;
 import java.util.List;
 
-import javax.swing.JFrame;
-import javax.swing.JList;
-import javax.swing.JScrollPane;
-import javax.swing.JTextArea;
-import javax.swing.ListSelectionModel;
-import javax.swing.ScrollPaneConstants;
-import javax.swing.border.LineBorder;
-import javax.swing.event.ListSelectionEvent;
-import javax.swing.event.ListSelectionListener;
-
-import net.miginfocom.swing.MigLayout;
-
-import amidst.AmidstMetaData;
-import amidst.documentation.Immutable;
+import static amidst.Amidst.BUFFERED_IMAGES;
 
 @Immutable
 public class LicenseWindow {
 	private static final String LICENSES_DIRECTORY = "/amidst/gui/license/";
 
-	private final AmidstMetaData metadata;
-
-	public LicenseWindow(AmidstMetaData metadata) {
-		this.metadata = metadata;
+	public LicenseWindow() {
 		License[] licenses = createLicenses();
 		JTextArea textArea = createLicenseTextArea();
 		JScrollPane scrollPane = createScrollPane(textArea);
@@ -82,7 +73,7 @@ public class LicenseWindow {
 		JFrame frame = new JFrame("Licenses");
 		initContentPane(frame.getContentPane(), licenseList, scrollPane);
 		frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-		frame.setIconImages(metadata.getIcons());
+		frame.setIconImages(BUFFERED_IMAGES);
 		frame.setSize(870, 550);
 		frame.setVisible(true);
 		return frame;

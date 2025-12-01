@@ -14,8 +14,10 @@ import org.kohsuke.args4j.CmdLineParser;
 import org.kohsuke.args4j.ParserProperties;
 
 import java.awt.EventQueue;
+import java.awt.image.BufferedImage;
 import java.sql.Timestamp;
 import java.util.Date;
+import java.util.List;
 import java.util.prefs.Preferences;
 
 /**
@@ -23,6 +25,23 @@ import java.util.prefs.Preferences;
  */
 @NotThreadSafe
 public class Amidst {
+
+	/**
+	 * A list of icon images for windows.
+	 */
+	public static final List<BufferedImage> BUFFERED_IMAGES = List.of(
+			ResourceLoader.getImage("/amidst/icon/amidst-16x16.png"),
+			ResourceLoader.getImage("/amidst/icon/amidst-32x32.png"),
+			ResourceLoader.getImage("/amidst/icon/amidst-48x48.png"),
+			ResourceLoader.getImage("/amidst/icon/amidst-64x64.png"),
+			ResourceLoader.getImage("/amidst/icon/amidst-128x128.png"),
+			ResourceLoader.getImage("/amidst/icon/amidst-256x256.png")
+	);
+
+	/**
+	 * The version of Amidst running.
+	 */
+	public static final AmidstVersion VERSION = AmidstVersion.from(ResourceLoader.getProperties("/amidst/metadata.properties"));
 
 	/**
 	 * The entry point to the Amidst application.
@@ -35,7 +54,6 @@ public class Amidst {
 
 		// Parse CLI arguments
 		CommandLineParameters parameters = new CommandLineParameters();
-		AmidstMetaData metadata = createMetadata();
 		CmdLineParser parser = new CmdLineParser(
 				parameters,
 				ParserProperties.defaults().withShowDefaults(false).withUsageWidth(120).withOptionSorter(null));
@@ -43,7 +61,7 @@ public class Amidst {
 		try {
 			parser.parseArgument(args);
 		} catch (CmdLineException e) {
-			System.out.println(metadata.getVersion().createLongVersionString());
+			System.out.println(VERSION.createLongVersionString());
 			System.err.println(e.getMessage());
 			parser.printUsage(System.out);
 			System.exit(2);
@@ -55,7 +73,7 @@ public class Amidst {
 			AmidstLogger.addListener("file", new FileLogger(parameters.logFile));
 		}
 
-		String versionString = metadata.getVersion().createLongVersionString();
+		String versionString = VERSION.createLongVersionString();
 
 		// Printing the help guide prints and exits
 		if (parameters.printHelp) {
@@ -85,7 +103,7 @@ public class Amidst {
 			AmidstSettings settings = new AmidstSettings(Preferences.userNodeForPackage(Amidst.class));
 			try {
 				settings.lookAndFeel.get().tryApply();
-				new Application(parameters, metadata, settings).run();
+				new Application(parameters, settings).run();
 			} catch (DotMinecraftDirectoryNotFoundException e) {
 				AmidstLogger.warn(e);
 				AmidstMessageBox.displayError(
@@ -95,17 +113,6 @@ public class Amidst {
 				handleCrash(e, Thread.currentThread());
 			}
 		});
-	}
-
-	public static AmidstMetaData createMetadata() {
-		return AmidstMetaData.from(
-				ResourceLoader.getProperties("/amidst/metadata.properties"),
-				ResourceLoader.getImage("/amidst/icon/amidst-16x16.png"),
-				ResourceLoader.getImage("/amidst/icon/amidst-32x32.png"),
-				ResourceLoader.getImage("/amidst/icon/amidst-48x48.png"),
-				ResourceLoader.getImage("/amidst/icon/amidst-64x64.png"),
-				ResourceLoader.getImage("/amidst/icon/amidst-128x128.png"),
-				ResourceLoader.getImage("/amidst/icon/amidst-256x256.png"));
 	}
 
 	private static String createPropertyString(String key) {

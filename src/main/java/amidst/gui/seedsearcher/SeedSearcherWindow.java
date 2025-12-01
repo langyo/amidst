@@ -1,19 +1,5 @@
 package amidst.gui.seedsearcher;
 
-import java.awt.Color;
-import java.util.Optional;
-
-import javax.swing.JButton;
-import javax.swing.JCheckBox;
-import javax.swing.JComboBox;
-import javax.swing.JFrame;
-import javax.swing.JLabel;
-import javax.swing.JScrollPane;
-import javax.swing.JTextArea;
-import javax.swing.ScrollPaneConstants;
-import javax.swing.border.LineBorder;
-
-import amidst.AmidstMetaData;
 import amidst.documentation.AmidstThread;
 import amidst.documentation.CalledOnlyBy;
 import amidst.documentation.NotThreadSafe;
@@ -27,9 +13,15 @@ import amidst.mojangapi.world.filter.WorldFilter;
 import amidst.util.SwingUtils;
 import net.miginfocom.swing.MigLayout;
 
+import javax.swing.*;
+import javax.swing.border.LineBorder;
+import java.awt.Color;
+import java.util.Optional;
+
+import static amidst.Amidst.BUFFERED_IMAGES;
+
 @NotThreadSafe
 public class SeedSearcherWindow {
-	private final AmidstMetaData metadata;
 	private final MainWindowDialogs dialogs;
 	private final WorldSwitcher worldSwitcher;
 	private final SeedSearcher seedSearcher;
@@ -42,11 +34,9 @@ public class SeedSearcherWindow {
 
 	@CalledOnlyBy(AmidstThread.EDT)
 	public SeedSearcherWindow(
-			AmidstMetaData metadata,
 			MainWindowDialogs dialogs,
 			WorldSwitcher worldSwitcher,
 			SeedSearcher seedSearcher) {
-		this.metadata = metadata;
 		this.dialogs = dialogs;
 		this.worldSwitcher = worldSwitcher;
 		this.seedSearcher = seedSearcher;
@@ -88,7 +78,7 @@ public class SeedSearcherWindow {
 	@CalledOnlyBy(AmidstThread.EDT)
 	private JFrame createFrame() {
 		JFrame result = new JFrame("Seed Searcher");
-		result.setIconImages(metadata.getIcons());
+		result.setIconImages(BUFFERED_IMAGES);
 		result.getContentPane().setLayout(new MigLayout());
 		result.add(new JLabel("Search Query:"), "growx, pushx, wrap");
 		result.add(createScrollPane(searchQueryTextArea), "grow, push, wrap");

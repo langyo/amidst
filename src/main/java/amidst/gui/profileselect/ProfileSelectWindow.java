@@ -1,6 +1,5 @@
 package amidst.gui.profileselect;
 
-import amidst.AmidstMetaData;
 import amidst.AmidstSettings;
 import amidst.Application;
 import amidst.documentation.AmidstThread;
@@ -23,6 +22,8 @@ import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.util.List;
 
+import static amidst.Amidst.BUFFERED_IMAGES;
+
 /**
  * A window that shows the profiles that are installed.
  * <p>
@@ -44,7 +45,6 @@ public class ProfileSelectWindow {
 	@CalledOnlyBy(AmidstThread.EDT)
 	public ProfileSelectWindow(
 			Application application,
-			AmidstMetaData metadata,
 			WorkerExecutor workerExecutor,
 			List<Version> versions,
 			VersionListProvider versionListProvider,
@@ -53,7 +53,7 @@ public class ProfileSelectWindow {
 			AmidstSettings settings) {
 
 		frame = new JFrame("Profile Selector");
-		frame.setIconImages(metadata.getIcons());
+		frame.setIconImages(BUFFERED_IMAGES);
 		frame.getContentPane().setLayout(new MigLayout());
 
 		JLabel title = new JLabel("Please select a Minecraft profile:", SwingConstants.CENTER);

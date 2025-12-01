@@ -1,6 +1,6 @@
 package amidst.gui.main;
 
-import amidst.AmidstMetaData;
+import amidst.Amidst;
 import amidst.AmidstSettings;
 import amidst.Application;
 import amidst.FeatureToggles;
@@ -32,6 +32,8 @@ import java.awt.Dimension;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 
+import static amidst.Amidst.BUFFERED_IMAGES;
+
 /**
  * The main application window, showing the world map.
  */
@@ -60,7 +62,6 @@ public class MainWindow {
 	 * Creates and shows the main application window.
 	 *
 	 * @param application            a reference to the Amidst instance
-	 * @param metadata               metadata about the application
 	 * @param settings               user settings
 	 * @param minecraftInstallation
 	 * @param runningLauncherProfile
@@ -73,7 +74,6 @@ public class MainWindow {
 	 */
 	@CalledOnlyBy(AmidstThread.EDT)
 	public MainWindow(Application application,
-					  AmidstMetaData metadata,
 					  AmidstSettings settings,
 					  MinecraftInstallation minecraftInstallation,
 					  RunningLauncherProfile runningLauncherProfile,
@@ -93,7 +93,7 @@ public class MainWindow {
 					dialogs,
 					runningLauncherProfile.createSilentPlayerlessCopy(),
 					threadMaster.getWorkerExecutor());
-			seedSearcherWindow = new SeedSearcherWindow(metadata, dialogs, worldSwitcher, seedSearcher);
+			seedSearcherWindow = new SeedSearcherWindow(dialogs, worldSwitcher, seedSearcher);
 		} else {
 			seedSearcherWindow = null;
 		}
@@ -127,8 +127,8 @@ public class MainWindow {
 		menuBar = new AmidstMenuBuilder(settings, actions, biomeProfileDirectory).construct();
 
 		frame.setSize(WINDOW_DIMENSIONS);
-		frame.setIconImages(metadata.getIcons());
-		frame.setTitle(createVersionString(metadata, runningLauncherProfile));
+		frame.setIconImages(BUFFERED_IMAGES);
+		frame.setTitle(createVersionString(runningLauncherProfile));
 		frame.setJMenuBar(menuBar.getMenuBar());
 		frame.getContentPane().setLayout(new BorderLayout());
 		frame.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
@@ -186,13 +186,12 @@ public class MainWindow {
 	/**
 	 * Gets a formatted string for the main window title.
 	 *
-	 * @param metadata               metadata about the application
 	 * @param runningLauncherProfile the current profile
 	 * @return a string for the title of the application
 	 */
 	@CalledOnlyBy(AmidstThread.EDT)
-	private static String createVersionString(AmidstMetaData metadata, RunningLauncherProfile runningLauncherProfile) {
-		return metadata.getVersion().createLongVersionString() +
+	private static String createVersionString(RunningLauncherProfile runningLauncherProfile) {
+		return Amidst.VERSION.createLongVersionString() +
 				" - Selected Profile: " +
 				runningLauncherProfile.getLauncherProfile().getProfileName() +
 				" - Minecraft Version " +

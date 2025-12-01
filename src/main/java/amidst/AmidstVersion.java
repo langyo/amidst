@@ -1,11 +1,12 @@
 package amidst;
 
-import java.util.Properties;
-
 import amidst.documentation.Immutable;
+
+import java.util.Properties;
 
 @Immutable
 public class AmidstVersion {
+
 	public static AmidstVersion from(Properties properties) {
 		return new AmidstVersion(
 				Integer.parseInt(properties.getProperty("amidst.version.major")),

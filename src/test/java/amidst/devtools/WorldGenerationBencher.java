@@ -1,6 +1,8 @@
 package amidst.devtools;
 
-import amidst.*;
+import amidst.AmidstSettings;
+import amidst.Application;
+import amidst.CommandLineParameters;
 import amidst.gui.main.MainWindow;
 import amidst.mojangapi.RunningLauncherProfile;
 import amidst.mojangapi.file.DotMinecraftDirectoryNotFoundException;
@@ -130,8 +132,7 @@ public class WorldGenerationBencher {
 	private Application startAmidst() throws FormatException, IOException {
 		AmidstSettings settings = new AmidstSettings(Preferences.userNodeForPackage(getClass()));
 		CommandLineParameters params = new CommandLineParameters();
-		AmidstMetaData metadata = Amidst.createMetadata();
-		return new Application(params, metadata, settings);
+		return new Application(params, settings);
 	}
 
 	private void adjustRecords(long startTime) {
