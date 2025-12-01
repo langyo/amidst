@@ -34,8 +34,12 @@ import java.util.Optional;
 public class Application {
 	private final LauncherProfileRunner launcherProfileRunner;
 
-	private volatile ProfileSelectWindow profileSelectWindow;
+	/**
+	 * The main window object.
+	 */
 	private volatile MainWindow mainWindow;
+
+	private volatile ProfileSelectWindow profileSelectWindow;
 	private volatile Optional<LauncherProfile> selectedLauncherProfile;
 
 	private final ThreadMaster threadMaster = new ThreadMaster();

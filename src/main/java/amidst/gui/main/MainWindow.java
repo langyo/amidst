@@ -31,7 +31,6 @@ import java.awt.Container;
 import java.awt.Dimension;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
-import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * The main application window, showing the world map.
@@ -45,21 +44,24 @@ public class MainWindow {
 	private static final Dimension WINDOW_DIMENSIONS = new Dimension(1000, 800);
 
 	/**
-	 * The JFrame that is the main window.
+	 * The main window frame.
 	 */
 	private final JFrame frame;
 
 	private final WorldSwitcher worldSwitcher;
-	private final AtomicReference<ViewerFacade> viewerFacadeReference = new AtomicReference<>();
 	private final SeedSearcherWindow seedSearcherWindow;
 	private final BiomeExporterDialog biomeExporterDialog;
+	private final Actions actions;
+	private final AmidstMenu menuBar;
+
+	private ViewerFacade viewerFacade;
 
 	/**
 	 * Creates and shows the main application window.
 	 *
 	 * @param application            a reference to the Amidst instance
-	 * @param metadata
-	 * @param settings
+	 * @param metadata               metadata about the application
+	 * @param settings               user settings
 	 * @param minecraftInstallation
 	 * @param runningLauncherProfile
 	 * @param biomeProfileDirectory
@@ -85,8 +87,6 @@ public class MainWindow {
 		Container contentPane = frame.getContentPane();
 
 		MainWindowDialogs dialogs = new MainWindowDialogs(settings, runningLauncherProfile, frame);
-		AtomicReference<AmidstMenu> menuBarReference = new AtomicReference<>();
-		AtomicReference<Actions> actionsReference = new AtomicReference<>();
 
 		if (FeatureToggles.SEED_SEARCH) {
 			SeedSearcher seedSearcher = new SeedSearcher(
@@ -98,7 +98,7 @@ public class MainWindow {
 			seedSearcherWindow = null;
 		}
 
-		biomeExporterDialog = new BiomeExporterDialog(new BiomeExporter(threadMaster.getWorkerExecutor()), frame, settings.biomeProfileSelection, menuBarReference::get, settings.lastBiomeExportPath);
+		biomeExporterDialog = new BiomeExporterDialog(new BiomeExporter(threadMaster.getWorkerExecutor()), frame, settings.biomeProfileSelection, this::getMenuBar, settings.lastBiomeExportPath);
 
 		worldSwitcher = new WorldSwitcher(
 				minecraftInstallation,
@@ -108,27 +108,23 @@ public class MainWindow {
 				layerBuilder,
 				fragmentManager,
 				biomeSelection,
-				actionsReference::get,
 				biomeExporterDialog,
 				threadMaster,
 				frame,
 				contentPane,
-				viewerFacadeReference,
-				dialogs,
-				menuBarReference::get);
-		Actions actions = new Actions(
+				this,
+				dialogs);
+		actions = new Actions(
 				application,
 				dialogs,
 				worldSwitcher,
 				seedSearcherWindow,
 				biomeExporterDialog,
-				viewerFacadeReference::get,
+				this,
 				settings.biomeProfileSelection,
 				settings.lastBiomeExportPath);
-		actionsReference.set(actions);
 
-		AmidstMenu menuBar = new AmidstMenuBuilder(settings, actions, biomeProfileDirectory).construct();
-		menuBarReference.set(menuBar);
+		menuBar = new AmidstMenuBuilder(settings, actions, biomeProfileDirectory).construct();
 
 		frame.setSize(WINDOW_DIMENSIONS);
 		frame.setIconImages(metadata.getIcons());
@@ -158,9 +154,25 @@ public class MainWindow {
 	}
 
 	public ViewerFacade getViewerFacade() {
-		return viewerFacadeReference.get();
+		return viewerFacade;
 	}
 
+	public void setViewerFacade(ViewerFacade viewerFacade) {
+		this.viewerFacade = viewerFacade;
+	}
+
+	public Actions getActions() {
+		return actions;
+	}
+
+	public AmidstMenu getMenuBar() {
+		return menuBar;
+	}
+
+	/**
+	 * Disposes of the biome exporter, world switcher, seed searcher,
+	 * and the main window frame.
+	 */
 	@CalledOnlyBy(AmidstThread.EDT)
 	public void dispose() {
 		biomeExporterDialog.dispose();
@@ -171,6 +183,13 @@ public class MainWindow {
 		SwingUtils.destroyComponentTree(frame);
 	}
 
+	/**
+	 * Gets a formatted string for the main window title.
+	 *
+	 * @param metadata               metadata about the application
+	 * @param runningLauncherProfile the current profile
+	 * @return a string for the title of the application
+	 */
 	@CalledOnlyBy(AmidstThread.EDT)
 	private static String createVersionString(AmidstMetaData metadata, RunningLauncherProfile runningLauncherProfile) {
 		return metadata.getVersion().createLongVersionString() +

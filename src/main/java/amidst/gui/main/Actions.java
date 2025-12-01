@@ -37,7 +37,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
-import java.util.function.Supplier;
 
 @NotThreadSafe
 public class Actions {
@@ -51,9 +50,13 @@ public class Actions {
 	private final WorldSwitcher worldSwitcher;
 	private final SeedSearcherWindow seedSearcherWindow;
 	private final BiomeExporterDialog biomeExporterDialog;
-	private final Supplier<ViewerFacade> viewerFacadeSupplier;
 	private final BiomeProfileSelection biomeProfileSelection;
 	private final Setting<String> lastScreenshotPath;
+
+	/**
+	 * A reference to the main window.
+	 */
+	private final MainWindow mainWindow;
 
 	@CalledOnlyBy(AmidstThread.EDT)
 	public Actions(
@@ -62,7 +65,7 @@ public class Actions {
 			WorldSwitcher worldSwitcher,
 			SeedSearcherWindow seedSearcherWindow,
 			BiomeExporterDialog biomeExporterDialog,
-			Supplier<ViewerFacade> viewerFacadeSupplier,
+			MainWindow mainWindow,
 			BiomeProfileSelection biomeProfileSelection,
 			Setting<String> lastScreenshotPath) {
 		this.application = application;
@@ -70,7 +73,7 @@ public class Actions {
 		this.worldSwitcher = worldSwitcher;
 		this.seedSearcherWindow = seedSearcherWindow;
 		this.biomeExporterDialog = biomeExporterDialog;
-		this.viewerFacadeSupplier = viewerFacadeSupplier;
+		this.mainWindow = mainWindow;
 		this.biomeProfileSelection = biomeProfileSelection;
 		this.lastScreenshotPath = lastScreenshotPath;
 	}
@@ -114,7 +117,7 @@ public class Actions {
 
 	@CalledOnlyBy(AmidstThread.EDT)
 	public void openExportDialog() {
-		ViewerFacade viewerFacade = viewerFacadeSupplier.get();
+		ViewerFacade viewerFacade = mainWindow.getViewerFacade();
 		if (viewerFacade != null) {
 			viewerFacade.openExportDialog();
 		}
@@ -138,7 +141,7 @@ public class Actions {
 
 	@CalledOnlyBy(AmidstThread.EDT)
 	public void goToCoordinate() {
-		ViewerFacade viewerFacade = viewerFacadeSupplier.get();
+		ViewerFacade viewerFacade = mainWindow.getViewerFacade();
 		if (viewerFacade != null) {
 			String input = dialogs.askForCoordinates();
 			if (input != null) {
@@ -155,7 +158,7 @@ public class Actions {
 
 	@CalledOnlyBy(AmidstThread.EDT)
 	public void goToSpawn() {
-		ViewerFacade viewerFacade = viewerFacadeSupplier.get();
+		ViewerFacade viewerFacade = mainWindow.getViewerFacade();
 		if (viewerFacade != null) {
 			viewerFacade.centerOn(viewerFacade.getSpawnWorldIcon());
 		}
@@ -163,7 +166,7 @@ public class Actions {
 
 	@CalledOnlyBy(AmidstThread.EDT)
 	public void goToStronghold() {
-		ViewerFacade viewerFacade = viewerFacadeSupplier.get();
+		ViewerFacade viewerFacade = mainWindow.getViewerFacade();
 		if (viewerFacade != null) {
 			WorldIcon stronghold = dialogs
 					.askForOptions("Go to", "Select Stronghold:", viewerFacade.getStrongholdWorldIcons());
@@ -175,7 +178,7 @@ public class Actions {
 
 	@CalledOnlyBy(AmidstThread.EDT)
 	public void goToPlayer() {
-		ViewerFacade viewerFacade = viewerFacadeSupplier.get();
+		ViewerFacade viewerFacade = mainWindow.getViewerFacade();
 		if (viewerFacade != null) {
 			List<WorldIcon> playerWorldIcons = viewerFacade.getPlayerWorldIcons();
 			if (!playerWorldIcons.isEmpty()) {
@@ -202,7 +205,7 @@ public class Actions {
 
 	@CalledOnlyBy(AmidstThread.EDT)
 	public void savePlayerLocations() {
-		ViewerFacade viewerFacade = viewerFacadeSupplier.get();
+		ViewerFacade viewerFacade = mainWindow.getViewerFacade();
 		if (viewerFacade != null) {
 			if (dialogs.askToConfirmSaveGameManipulation()) {
 				viewerFacade.savePlayerLocations();
@@ -212,7 +215,7 @@ public class Actions {
 
 	@CalledOnlyBy(AmidstThread.EDT)
 	public void reloadPlayerLocations() {
-		ViewerFacade viewerFacade = viewerFacadeSupplier.get();
+		ViewerFacade viewerFacade = mainWindow.getViewerFacade();
 		if (viewerFacade != null) {
 			viewerFacade.loadPlayers();
 		}
@@ -230,7 +233,7 @@ public class Actions {
 
 	@CalledOnlyBy(AmidstThread.EDT)
 	public void copySeedToClipboard() {
-		ViewerFacade viewerFacade = viewerFacadeSupplier.get();
+		ViewerFacade viewerFacade = mainWindow.getViewerFacade();
 		if (viewerFacade != null) {
 			String seed = "" + viewerFacade.getWorldOptions().getWorldSeed().getLong();
 			StringSelection selection = new StringSelection(seed);
@@ -240,7 +243,7 @@ public class Actions {
 
 	@CalledOnlyBy(AmidstThread.EDT)
 	public void takeScreenshot() {
-		ViewerFacade viewerFacade = viewerFacadeSupplier.get();
+		ViewerFacade viewerFacade = mainWindow.getViewerFacade();
 		if (viewerFacade != null) {
 			WorldOptions worldOptions = viewerFacade.getWorldOptions();
 			BufferedImage image = viewerFacade.createScreenshot();
@@ -275,7 +278,7 @@ public class Actions {
 	@CalledOnlyBy(AmidstThread.EDT)
 	public void selectBiomeProfile(BiomeProfile profile) {
 		biomeProfileSelection.set(profile);
-		ViewerFacade viewerFacade = viewerFacadeSupplier.get();
+		ViewerFacade viewerFacade = mainWindow.getViewerFacade();
 		if (viewerFacade != null) {
 			viewerFacade.reloadBackgroundLayer();
 		}
@@ -321,7 +324,7 @@ public class Actions {
 
 	@CalledOnlyBy(AmidstThread.EDT)
 	private void adjustZoom(int notches) {
-		ViewerFacade viewerFacade = viewerFacadeSupplier.get();
+		ViewerFacade viewerFacade = mainWindow.getViewerFacade();
 		if (viewerFacade != null) {
 			viewerFacade.adjustZoom(notches);
 		}
@@ -329,7 +332,7 @@ public class Actions {
 
 	@CalledOnlyBy(AmidstThread.EDT)
 	public void adjustZoom(Point mousePosition, int notches) {
-		ViewerFacade viewerFacade = viewerFacadeSupplier.get();
+		ViewerFacade viewerFacade = mainWindow.getViewerFacade();
 		if (viewerFacade != null) {
 			viewerFacade.adjustZoom(mousePosition, notches);
 		}
@@ -337,7 +340,7 @@ public class Actions {
 
 	@CalledOnlyBy(AmidstThread.EDT)
 	public void selectWorldIcon(WorldIcon worldIcon) {
-		ViewerFacade viewerFacade = viewerFacadeSupplier.get();
+		ViewerFacade viewerFacade = mainWindow.getViewerFacade();
 		if (viewerFacade != null) {
 			viewerFacade.selectWorldIcon(worldIcon);
 		}
@@ -345,7 +348,7 @@ public class Actions {
 
 	@CalledOnlyBy(AmidstThread.EDT)
 	public void showPlayerPopupMenu(CoordinatesInWorld targetCoordinates, Component component, int x, int y) {
-		ViewerFacade viewerFacade = viewerFacadeSupplier.get();
+		ViewerFacade viewerFacade = mainWindow.getViewerFacade();
 		if (viewerFacade != null) {
 			if (viewerFacade.canSavePlayerLocations()) {
 				new MovePlayerPopupMenu(this, viewerFacade.getMovablePlayerList(), targetCoordinates)
@@ -356,7 +359,7 @@ public class Actions {
 
 	@CalledOnlyBy(AmidstThread.EDT)
 	public void movePlayer(Player player, CoordinatesInWorld targetCoordinates) {
-		ViewerFacade viewerFacade = viewerFacadeSupplier.get();
+		ViewerFacade viewerFacade = mainWindow.getViewerFacade();
 		if (viewerFacade != null) {
 			PlayerCoordinates currentCoordinates = player.getPlayerCoordinates();
 			long currentHeight = currentCoordinates.getY();

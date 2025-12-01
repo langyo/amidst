@@ -7,7 +7,6 @@ import amidst.documentation.NotThreadSafe;
 import amidst.fragment.FragmentManager;
 import amidst.fragment.layer.LayerBuilder;
 import amidst.gui.export.BiomeExporterDialog;
-import amidst.gui.main.menu.AmidstMenu;
 import amidst.gui.main.viewer.BiomeSelection;
 import amidst.gui.main.viewer.ViewerFacade;
 import amidst.gui.main.viewer.Zoom;
@@ -27,8 +26,6 @@ import java.awt.BorderLayout;
 import java.awt.Container;
 import java.io.IOException;
 import java.nio.file.Path;
-import java.util.concurrent.atomic.AtomicReference;
-import java.util.function.Supplier;
 
 @NotThreadSafe
 public class WorldSwitcher {
@@ -40,13 +37,15 @@ public class WorldSwitcher {
 	private final LayerBuilder layerBuilder;
 	private final FragmentManager fragmentManager;
 	private final BiomeSelection biomeSelection;
-	private final Supplier<Actions> actionsSupplier;
 	private final ThreadMaster threadMaster;
 	private final JFrame frame;
 	private final Container contentPane;
-	private final AtomicReference<ViewerFacade> viewerFacadeReference;
 	private final MainWindowDialogs dialogs;
-	private final Supplier<AmidstMenu> menuBarSupplier;
+
+	/**
+	 * A reference to the main window.
+	 */
+	private final MainWindow mainWindow;
 
 	@CalledOnlyBy(AmidstThread.EDT)
 	public WorldSwitcher(
@@ -57,14 +56,12 @@ public class WorldSwitcher {
 			LayerBuilder layerBuilder,
 			FragmentManager fragmentManager,
 			BiomeSelection biomeSelection,
-			Supplier<Actions> actionsSupplier,
 			BiomeExporterDialog biomeExporterDialog,
 			ThreadMaster threadMaster,
 			JFrame frame,
 			Container contentPane,
-			AtomicReference<ViewerFacade> viewerFacadeReference,
-			MainWindowDialogs dialogs,
-			Supplier<AmidstMenu> menuBarSupplier) {
+			MainWindow mainWindow,
+			MainWindowDialogs dialogs) {
 		this.minecraftInstallation = minecraftInstallation;
 		this.runningLauncherProfile = runningLauncherProfile;
 		this.settings = settings;
@@ -73,13 +70,11 @@ public class WorldSwitcher {
 		this.layerBuilder = layerBuilder;
 		this.fragmentManager = fragmentManager;
 		this.biomeSelection = biomeSelection;
-		this.actionsSupplier = actionsSupplier;
 		this.threadMaster = threadMaster;
 		this.frame = frame;
 		this.contentPane = contentPane;
-		this.viewerFacadeReference = viewerFacadeReference;
+		this.mainWindow = mainWindow;
 		this.dialogs = dialogs;
-		this.menuBarSupplier = menuBarSupplier;
 	}
 
 	@CalledOnlyBy(AmidstThread.EDT)
@@ -108,12 +103,13 @@ public class WorldSwitcher {
 	private void clearViewerFacade() {
 		threadMaster.clearOnRepaintTick();
 		threadMaster.clearOnFragmentLoadTick();
-		ViewerFacade viewerFacade = viewerFacadeReference.getAndSet(null);
+		ViewerFacade viewerFacade = mainWindow.getViewerFacade();
 		if (viewerFacade != null) {
+			mainWindow.setViewerFacade(null);
 			contentPane.remove(viewerFacade.getComponent());
 			viewerFacade.dispose();
 		}
-		menuBarSupplier.get().clear();
+		mainWindow.getMenuBar().clear();
 	}
 
 	@CalledOnlyBy(AmidstThread.EDT)
@@ -128,7 +124,7 @@ public class WorldSwitcher {
 					biomeExporterDialog,
 					layerBuilder,
 					biomeSelection,
-					actionsSupplier.get());
+					mainWindow.getActions());
 			setViewerFacade(v);
 		} else {
 			frame.revalidate();
@@ -154,12 +150,12 @@ public class WorldSwitcher {
 	@CalledOnlyBy(AmidstThread.EDT)
 	private void setViewerFacade(ViewerFacade viewerFacade) {
 		contentPane.add(viewerFacade.getComponent(), BorderLayout.CENTER);
-		menuBarSupplier.get().set(viewerFacade);
+		mainWindow.getMenuBar().set(viewerFacade);
 		frame.validate();
 		viewerFacade.loadPlayers();
 		threadMaster.setOnRepaintTick(viewerFacade.getOnRepainterTick());
 		threadMaster.setOnFragmentLoadTick(viewerFacade.getOnFragmentLoaderTick());
-		viewerFacadeReference.set(viewerFacade);
+		mainWindow.setViewerFacade(viewerFacade);
 	}
 
 	@CalledOnlyBy(AmidstThread.EDT)
